@@ -121,7 +121,7 @@ export default function NotFound() {
             Page Not Found
           </p>
           <p className="text-sm text-black/40 max-w-md">
-            The page you are looking for might have been moved or doesn't exist in this space.
+            The page you are looking for might have been moved or doesn&apos;t exist in this space.
           </p>
         </motion.div>
         

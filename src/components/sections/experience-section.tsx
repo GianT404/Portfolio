@@ -43,7 +43,7 @@ export function ExperienceSection() {
               Process Rituals
             </div>
             <h2 className="mt-6 text-[clamp(2.5rem,5vw,4rem)] font-medium leading-[1.1] tracking-tight">
-              I'm always interested about
+              I&apos;m always interested about
             </h2>
           </div>
         </motion.div>

@@ -9,15 +9,15 @@ import {
   setupInitialPassword,
   validateAdminPassword, 
   changeAdminPassword,
-  getAdminStats 
 } from '@/lib/adminAuth';
 
+// Interface cho tin nhắn
 // Interface cho tin nhắn
 interface Message {
   id?: string;
   text: string;
   sender: 'user' | 'admin';
-  timestamp: any;
+  timestamp: number | Record<string, unknown>;
   senderName?: string;
   fileUrl?: string;
   fileName?: string;
@@ -30,7 +30,7 @@ interface Conversation {
   id: string;
   userInfo: {
     name: string;
-    lastActive: any;
+    lastActive: number | Record<string, unknown>;
     hasUnreadMessages?: boolean;
   };
   messages: Message[];
@@ -99,9 +99,10 @@ const ConversationCard = memo(({
   isSelected: boolean;
   onClick: () => void;
 }) => {
-  const formatTime = useCallback((timestamp: any) => {
+  const formatTime = useCallback((timestamp: number | Record<string, unknown> | undefined) => {
     if (!timestamp) return '';
-    const date = new Date(timestamp);
+    const timeValue = typeof timestamp === 'number' ? timestamp : Date.now();
+    const date = new Date(timeValue);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
@@ -176,9 +177,10 @@ ConversationCard.displayName = 'ConversationCard';
 
 // Enhanced Message Bubble - Memoized để tối ưu hiệu suất
 const MessageBubble = memo(({ message, isLast }: { message: Message; isLast: boolean }) => {
-  const formatTime = useCallback((timestamp: any) => {
+  const formatTime = useCallback((timestamp: number | Record<string, unknown> | undefined) => {
     if (!timestamp) return '';
-    const date = new Date(timestamp);
+    const timeValue = typeof timestamp === 'number' ? timestamp : Date.now();
+    const date = new Date(timeValue);
     return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   }, []);
 
@@ -304,7 +306,10 @@ const AdminStats = memo(({ conversations }: { conversations: Conversation[] }) =
     const totalUsers = conversations.length;
     const unreadConversations = conversations.filter(conv => conv.userInfo.hasUnreadMessages).length;
     const activeToday = conversations.filter(conv => {
-      const lastActive = new Date(conv.userInfo.lastActive);
+      const lastActiveValue = typeof conv.userInfo.lastActive === 'number' 
+        ? conv.userInfo.lastActive 
+        : Date.now();
+      const lastActive = new Date(lastActiveValue);
       const today = new Date();
       return lastActive.toDateString() === today.toDateString();
     }).length;
@@ -514,24 +519,37 @@ export default function AdminPage() {
     const unsubscribe = onValue(conversationsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const conversationsList: Conversation[] = Object.entries(data).map(([key, value]: [string, any]) => {
-          const messages = value.messages ? Object.entries(value.messages).map(([msgKey, msgValue]: [string, any]) => ({
-            id: msgKey,
-            ...msgValue
-          })) : [];
+        const conversationsList: Conversation[] = Object.entries(data).map(([key, value]: [string, unknown]) => {
+          const convValue = value as Record<string, unknown>;
+          const messagesData = convValue.messages as Record<string, unknown> | undefined;
+          const messages = messagesData 
+            ? Object.entries(messagesData).map(([msgKey, msgValue]: [string, unknown]) => ({
+                id: msgKey,
+                ...(msgValue as Omit<Message, 'id'>)
+              })) 
+            : [];
           
-          const userInfoEntries = value.userInfo ? Object.values(value.userInfo) : [];
-          const latestUserInfo = userInfoEntries[userInfoEntries.length - 1] as any;
+          const userInfoData = convValue.userInfo as Record<string, unknown> | undefined;
+          const userInfoEntries = userInfoData ? Object.values(userInfoData) : [];
+          const latestUserInfo = userInfoEntries[userInfoEntries.length - 1] as Conversation['userInfo'] | undefined;
           
           return {
             id: key,
             userInfo: latestUserInfo || { name: 'Unknown', lastActive: Date.now() },
-            messages: messages.sort((a, b) => a.timestamp - b.timestamp),
+            messages: messages.sort((a, b) => {
+              const aTime = typeof a.timestamp === 'number' ? a.timestamp : 0;
+              const bTime = typeof b.timestamp === 'number' ? b.timestamp : 0;
+              return aTime - bTime;
+            }),
             lastMessage: messages[messages.length - 1]
           };
         });
         
-        conversationsList.sort((a, b) => b.userInfo.lastActive - a.userInfo.lastActive);
+        conversationsList.sort((a, b) => {
+          const aTime = typeof a.userInfo.lastActive === 'number' ? a.userInfo.lastActive : 0;
+          const bTime = typeof b.userInfo.lastActive === 'number' ? b.userInfo.lastActive : 0;
+          return bTime - aTime;
+        });
         setConversations(conversationsList);
       }
     });

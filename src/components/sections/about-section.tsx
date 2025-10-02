@@ -904,7 +904,7 @@ function GlobalWebSnake({ onScoreSubmit }: { onScoreSubmit?: (name: string, scor
                 }
               }}
             />
-            <p className="text-xs text-black/50 text-center">Enter your name and press "Start Game" to begin</p>
+            <p className="text-xs text-black/50 text-center">Enter your name and press &apos;Start Game&apos; to begin</p>
           </motion.div>
         )}
 
@@ -961,7 +961,7 @@ function GlobalWebSnake({ onScoreSubmit }: { onScoreSubmit?: (name: string, scor
             <div className="text-sm text-red-500 mt-1">{playerName}: {score} points</div>
             {hitElement && (
               <div className="text-xs text-red-400 mt-2 p-2 bg-red-100 rounded">
-                💥 Collided: "{hitElement}"
+                💥 Collided: &apos;{hitElement}&apos;
               </div>
             )}
             <button

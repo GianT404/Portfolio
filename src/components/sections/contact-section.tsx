@@ -11,7 +11,7 @@ interface Message {
   id?: string;
   text: string;
   sender: 'user' | 'admin';
-  timestamp: any;
+  timestamp: unknown;
   senderName?: string;
   fileUrl?: string;
   fileName?: string;
@@ -97,12 +97,16 @@ const MinimalChatbox = () => {
     const unsubscribe = onValue(userMessagesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const messagesList = Object.entries(data).map(([key, value]: [string, any]) => ({
+        const messagesList = Object.entries(data).map(([key, value]: [string, unknown]) => ({
           id: key,
-          ...value
+          ...(value as Omit<Message, 'id'>)
         }));
         // Sắp xếp theo timestamp
-        messagesList.sort((a, b) => a.timestamp - b.timestamp);
+        messagesList.sort((a, b) => {
+          const aTime = typeof a.timestamp === 'number' ? a.timestamp : 0;
+          const bTime = typeof b.timestamp === 'number' ? b.timestamp : 0;
+          return aTime - bTime;
+        });
         setMessages(messagesList);
       } else {
         setMessages([]);
@@ -272,7 +276,7 @@ const MinimalChatbox = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Let's go
+                Let&apos;s go
               </motion.button>
             </div>
           </form>
@@ -283,7 +287,7 @@ const MinimalChatbox = () => {
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto space-y-3 mb-4">
           {messages.length === 0 ? (
             <p className="text-black/40 text-sm text-center py-8">
-             Let's start the conversation!
+             Let&apos;s start the conversation!
             </p>
           ) : (
             messages.map((message) => (
